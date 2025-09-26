@@ -354,28 +354,7 @@ export default function LoginPage() {
 
             {/* Aba de Login */}
             {tabValue === 0 && (
-              <Box>
-                {/* Credenciais de teste */}
-                <Alert 
-                  severity="info" 
-                  sx={{ 
-                    mb: 3, 
-                    borderRadius: '12px',
-                    background: 'rgba(255, 215, 0, 0.1)',
-                    color: '#FFD700',
-                    border: '1px solid rgba(255, 215, 0, 0.3)'
-                  }}
-                >
-                  <Typography variant="body2" sx={{ fontWeight: 600, mb: 1 }}>
-                    🔑 Credenciais de Teste:
-                  </Typography>
-                  <Typography variant="body2">
-                    <strong>Admin:</strong> admin@cineteca.com / admin123<br />
-                    <strong>Usuário:</strong> usuario@email.com / user123
-                  </Typography>
-                </Alert>
-
-                <Box component="form" onSubmit={handleLoginSubmit}>
+              <Box component="form" onSubmit={handleLoginSubmit}>
                 <StyledTextField
                   fullWidth
                   label="Email"
