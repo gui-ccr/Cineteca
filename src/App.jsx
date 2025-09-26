@@ -7,7 +7,7 @@ import MovieCard from './components/MovieCards'
 import './App.css'
 
 // Tema customizado com cores de cinema
-const theme = createTheme({
+export const theme = createTheme({
   palette: {
     mode: 'dark',
     primary: {

@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
+import { useAuth } from '../contexts/AuthContext';
 import { 
   Box, 
   Typography, 
@@ -274,6 +275,7 @@ export default function MovieDetails() {
   const API_KEY = '6ceadc41cf0872e0a149f2cb4782846e';
   const navigate = useNavigate();
   const { movieId } = useParams();
+  const { isAuthenticated } = useAuth();
   
   const [movie, setMovie] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -320,6 +322,12 @@ export default function MovieDetails() {
   };
 
   const handleBuyTicket = () => {
+    if (!isAuthenticated()) {
+      // Redirecionar para login se não estiver autenticado
+      navigate('/login', { state: { from: { pathname: `/filme/${movieId}` } } });
+      return;
+    }
+    
     if (selectedSession) {
       setBuyDialogOpen(true);
     }

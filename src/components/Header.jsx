@@ -1,7 +1,9 @@
-import { AppBar, Toolbar, Typography, Button, Box, IconButton } from '@mui/material'
+import { AppBar, Toolbar, Typography, Button, Box, IconButton, Menu, MenuItem, Avatar, Divider } from '@mui/material'
 import { styled } from '@mui/material/styles'
-import { Link } from 'react-router-dom'
-import { MovieFilter, AdminPanelSettings, LocalActivity } from '@mui/icons-material'
+import { Link, useNavigate } from 'react-router-dom'
+import { MovieFilter, AdminPanelSettings, LocalActivity, Person, ExitToApp, ShoppingCart, History } from '@mui/icons-material'
+import { useState } from 'react'
+import { useAuth } from '../contexts/AuthContext'
 
 const StyledAppBar = styled(AppBar)({
   background: 'rgba(10, 10, 10, 0.95)',
@@ -94,6 +96,53 @@ const ToolbarContent = styled(Toolbar)({
 });
 
 export default function Header({ title }) {
+  const navigate = useNavigate();
+  const { user, profile, isAuthenticated, isAdmin, logout } = useAuth();
+  
+
+  const [anchorEl, setAnchorEl] = useState(null);
+  
+  const handleUserMenuOpen = (event) => {
+    setAnchorEl(event.currentTarget);
+  };
+
+  const handleUserMenuClose = () => {
+    setAnchorEl(null);
+  };
+
+  const handleLogout = async () => {
+    try {
+      console.log('Clicou em logout');
+      handleUserMenuClose();
+      
+      const result = await logout();
+      console.log('Resultado do logout:', result);
+      
+      // Navegar para home independentemente do resultado
+      navigate('/');
+      
+      // Recarregar a página para garantir que o estado seja limpo
+      window.location.reload();
+    } catch (error) {
+      console.error('Erro no handleLogout:', error);
+      handleUserMenuClose();
+      navigate('/');
+      window.location.reload();
+    }
+  };
+
+  const getUserInitials = () => {
+    if (profile?.name) {
+      return profile.name
+        .split(' ')
+        .map(name => name[0])
+        .join('')
+        .toUpperCase()
+        .substring(0, 2);
+    }
+    return user?.email?.substring(0, 2).toUpperCase() || '??';
+  };
+
   return (
     <StyledAppBar position="sticky" elevation={0}>
       <ToolbarContent>
@@ -105,15 +154,116 @@ export default function Header({ title }) {
         </LogoContainer>
 
         <NavContainer>
-          <AdminButton
-            startIcon={<AdminPanelSettings />}
-            onClick={() => {
-              // Aqui você pode adicionar a lógica de login do admin
-              console.log('Admin login clicked');
-            }}
-          >
-            Admin
-          </AdminButton>
+          {!isAuthenticated() ? (
+            <AdminButton
+              startIcon={<Person />}
+              onClick={() => navigate('/login')}
+            >
+              Login
+            </AdminButton>
+          ) : (
+            <Box sx={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+              {isAdmin() && (
+                <AdminButton
+                  startIcon={<AdminPanelSettings />}
+                  onClick={() => navigate('/admin')}
+                  sx={{ 
+                    background: 'linear-gradient(135deg, rgba(255, 215, 0, 0.2), rgba(229, 9, 20, 0.2))',
+                    borderColor: '#FFD700',
+                  }}
+                >
+                  Admin
+                </AdminButton>
+              )}
+              
+              <IconButton
+                onClick={handleUserMenuOpen}
+                sx={{
+                  background: 'linear-gradient(135deg, #E50914, #B20710)',
+                  color: 'white',
+                  width: 45,
+                  height: 45,
+                  '&:hover': {
+                    background: 'linear-gradient(135deg, #FF3E46, #E50914)',
+                  }
+                }}
+              >
+                <Avatar 
+                  sx={{ 
+                    width: 40, 
+                    height: 40, 
+                    backgroundColor: 'transparent',
+                    color: 'white',
+                    fontWeight: 'bold'
+                  }}
+                >
+                  {getUserInitials()}
+                </Avatar>
+              </IconButton>
+
+              <Menu
+                anchorEl={anchorEl}
+                open={Boolean(anchorEl)}
+                onClose={handleUserMenuClose}
+                PaperProps={{
+                  sx: {
+                    background: 'linear-gradient(145deg, #1A1A1A, #0F0F0F)',
+                    border: '1px solid rgba(229, 9, 20, 0.3)',
+                    borderRadius: '12px',
+                    mt: 1.5,
+                    minWidth: 200,
+                  }
+                }}
+                transformOrigin={{ horizontal: 'right', vertical: 'top' }}
+                anchorOrigin={{ horizontal: 'right', vertical: 'bottom' }}
+              >
+                <Box sx={{ px: 2, py: 1.5 }}>
+                  <Typography variant="body1" sx={{ color: '#FFD700', fontWeight: 600 }}>
+                    {profile?.name || 'Usuário'}
+                  </Typography>
+                  <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.6)' }}>
+                    {user?.email}
+                  </Typography>
+                </Box>
+                
+                <Divider sx={{ borderColor: 'rgba(229, 9, 20, 0.2)' }} />
+                
+                <MenuItem 
+                  onClick={() => { handleUserMenuClose(); navigate('/perfil'); }}
+                  sx={{ color: 'white', gap: 2 }}
+                >
+                  <Person />
+                  Meu Perfil
+                </MenuItem>
+                
+                <MenuItem 
+                  onClick={() => { handleUserMenuClose(); navigate('/carrinho'); }}
+                  sx={{ color: 'white', gap: 2 }}
+                >
+                  <ShoppingCart />
+                  Carrinho
+                </MenuItem>
+                
+                <MenuItem 
+                  onClick={() => { handleUserMenuClose(); navigate('/historico'); }}
+                  sx={{ color: 'white', gap: 2 }}
+                >
+                  <History />
+                  Meus Ingressos
+                </MenuItem>
+                
+                <Divider sx={{ borderColor: 'rgba(229, 9, 20, 0.2)' }} />
+                
+                <MenuItem 
+                  onClick={handleLogout}
+                  sx={{ color: '#E50914', gap: 2 }}
+                >
+                  <ExitToApp />
+                  Sair
+                </MenuItem>
+              </Menu>
+            </Box>
+          )}
         </NavContainer>
       </ToolbarContent>
     </StyledAppBar>
