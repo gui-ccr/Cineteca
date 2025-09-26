@@ -262,10 +262,10 @@ const TicketCode = styled(Typography)({
 
 // Mock data
 const mockSessions = [
-  { id: 1, time: '14:30', price: 25.00, seats: 45, type: '2D', period: 'Matinê' },
-  { id: 2, time: '17:15', price: 28.00, seats: 23, type: '2D', period: 'Tarde' },
-  { id: 3, time: '20:00', price: 32.00, seats: 67, type: '3D', period: 'Prime' },
-  { id: 4, time: '22:45', price: 28.00, seats: 89, type: '2D', period: 'Noite' },
+  { id: 1, time: '14:30', price: 25.00, seats: 45, period: 'Matinê' },
+  { id: 2, time: '17:15', price: 28.00, seats: 23, period: 'Tarde' },
+  { id: 3, time: '20:00', price: 32.00, seats: 67, period: 'Prime' },
+  { id: 4, time: '22:45', price: 28.00, seats: 89, period: 'Noite' },
 ];
 
 const steps = ['Confirmação', 'Pagamento', 'Finalização'];
@@ -282,6 +282,7 @@ export default function MovieDetails() {
   const [buyDialogOpen, setBuyDialogOpen] = useState(false);
   const [activeStep, setActiveStep] = useState(0);
   const [ticketQuantity, setTicketQuantity] = useState(1);
+  const [ticketType, setTicketType] = useState('inteira');
   const [paymentMethod, setPaymentMethod] = useState('');
   const [ticketCode, setTicketCode] = useState('');
   const [snackbarOpen, setSnackbarOpen] = useState(false);
@@ -327,6 +328,7 @@ export default function MovieDetails() {
   const handleCloseBuyDialog = () => {
     setBuyDialogOpen(false);
     setActiveStep(0);
+    setTicketType('inteira');
     setPaymentMethod('');
     setTicketCode('');
   };
@@ -347,6 +349,10 @@ export default function MovieDetails() {
   const copyTicketCode = () => {
     navigator.clipboard.writeText(ticketCode);
     setSnackbarOpen(true);
+  };
+
+  const calculatePrice = (basePrice, type) => {
+    return type === 'meia' ? basePrice * 0.5 : basePrice;
   };
 
   const selectedSessionData = mockSessions.find(s => s.id === selectedSession);
@@ -506,7 +512,7 @@ export default function MovieDetails() {
                   <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <Box>
                       <Typography variant="body2" sx={{ color: 'rgba(255,255,255,0.6)' }}>
-                        {session.type} • {session.seats} lugares
+                        {session.seats} lugares disponíveis
                       </Typography>
                     </Box>
                     <Typography variant="h6" sx={{ color: '#FFD700', fontWeight: 700 }}>
@@ -538,7 +544,7 @@ export default function MovieDetails() {
                 startIcon={<ConfirmationNumber />}
               >
                 {selectedSession 
-                  ? `Comprar - R$ ${selectedSessionData?.price.toFixed(2)}` 
+                  ? `Comprar Ingresso` 
                   : 'Selecione um Horário'}
               </BuyButton>
             </SessionsPanel>
@@ -565,7 +571,7 @@ export default function MovieDetails() {
                   Finalizar Compra
                 </Typography>
                 <Typography variant="subtitle1" sx={{ color: 'rgba(255,255,255,0.6)' }}>
-                  {movie.title} • {selectedSessionData?.time} • {selectedSessionData?.type}
+                  {movie.title} • {selectedSessionData?.time}
                 </Typography>
               </Box>
               <IconButton onClick={handleCloseBuyDialog} sx={{ color: 'rgba(255,255,255,0.6)' }}>
@@ -602,8 +608,11 @@ export default function MovieDetails() {
                   </Typography>
                   
                   <Paper sx={{ p: 3, mb: 3, background: 'rgba(255,255,255,0.03)' }}>
+                    <Typography variant="body1" sx={{ mb: 1 }}>
+                      Sessão: <strong>{selectedSessionData?.time}</strong>
+                    </Typography>
                     <Typography variant="body1" sx={{ mb: 2 }}>
-                      Sessão: <strong>{selectedSessionData?.time} - {selectedSessionData?.type}</strong>
+                      Tipo: <strong>{ticketType === 'inteira' ? 'Entrada Inteira' : 'Meia Entrada'}</strong>
                     </Typography>
                     
                     <FormControl fullWidth sx={{ mb: 2 }}>
@@ -618,13 +627,38 @@ export default function MovieDetails() {
                         ))}
                       </Select>
                     </FormControl>
+
+                    <FormControl fullWidth sx={{ mb: 2 }}>
+                      <InputLabel>Tipo de Ingresso</InputLabel>
+                      <Select
+                        value={ticketType}
+                        label="Tipo de Ingresso"
+                        onChange={(e) => setTicketType(e.target.value)}
+                      >
+                        <MenuItem value="inteira">
+                          Entrada Inteira - R$ {selectedSessionData?.price.toFixed(2)}
+                        </MenuItem>
+                        <MenuItem value="meia">
+                          Meia Entrada - R$ {calculatePrice(selectedSessionData?.price || 0, 'meia').toFixed(2)}
+                        </MenuItem>
+                      </Select>
+                    </FormControl>
+                    
+                    {ticketType === 'meia' && (
+                      <Alert severity="info" sx={{ mb: 2 }}>
+                        <Typography variant="body2">
+                          <strong>Meia Entrada:</strong> Apresente documento de estudante, carteira de trabalho (desempregados), 
+                          documento de idoso (+60 anos) ou pessoa com deficiência na entrada do cinema.
+                        </Typography>
+                      </Alert>
+                    )}
                     
                     <Divider sx={{ my: 2 }} />
                     
                     <Box sx={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                       <Typography variant="h6">Total:</Typography>
                       <Typography variant="h5" sx={{ color: '#FFD700', fontWeight: 700 }}>
-                        R$ {((selectedSessionData?.price || 0) * ticketQuantity).toFixed(2)}
+                        R$ {(calculatePrice(selectedSessionData?.price || 0, ticketType) * ticketQuantity).toFixed(2)}
                       </Typography>
                     </Box>
                   </Paper>
